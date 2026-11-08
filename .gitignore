@@ -1,0 +1,76 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Environment variables & secrets
+.env
+*.env.local
+backend/.env
+frontend/.env
+!.env.example
+!backend/.env.example
+!frontend/.env.example
+
+# Databases & WAL files
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Runtime uploads & local storage (preserve directory structure only)
+uploads/
+backend/storage/
+backend/uploads/originals/*
+backend/uploads/previews/*
+backend/uploads/processed/*
+!backend/uploads/originals/.gitkeep
+!backend/uploads/previews/.gitkeep
+!backend/uploads/processed/.gitkeep
+
+# Local scratch & sample test files
+Rigveda_Manuscript_Sample.jpg
+Sample_Rigveda_Manuscript.pdf
+backend/Rigveda_Manuscript_Sample.jpg
+backend/check_db.py
+backend/manuscript_ocr_full.json
+backend/manuscript_transcription.txt
+backend/run_manuscript_ocr.py
+backend/test_sample.png
+backend/user_manuscript.pdf
+backend/docs/EXISTING_PROJECT_AUDIT.md
+frontend/FRONTEND_TESTING_REPORT.md
+
+# Frontend dependencies & builds
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+dist-ssr/
+*.local
+
+# Test & coverage caches
+.pytest_cache/
+backend/.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs & OS / Editor files
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json

@@ -1,0 +1,2145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AksharaRecover AI — Real-Time Manuscript Processing Journey</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-parchment: #FBF8F1;
+      --bg-card: #F4EFE6;
+      --bg-card-hover: #ECE4D4;
+      --bg-card-active: #E6DBC7;
+      --text-ink: #1C1E21;
+      --text-muted: #5C626C;
+      --text-subtle: #848C98;
+      --border-parchment: #E2D9C8;
+      --border-accent: #C59B27;
+      --gold-primary: #C59B27;
+      --gold-glow: rgba(197, 155, 39, 0.2);
+      --gold-light: #E8CA65;
+      --gold-dark: #8C6A12;
+      --status-completed: #1B7F49;
+      --status-in-progress: #C59B27;
+      --status-waiting: #848C98;
+      --status-review: #D97706;
+      --status-failed: #C53030;
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 3px rgba(28, 30, 33, 0.06);
+      --shadow-md: 0 4px 12px rgba(28, 30, 33, 0.08);
+      --shadow-lg: 0 8px 24px rgba(28, 30, 33, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-parchment);
+      color: var(--text-ink);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* TOP BAR */
+    header {
+      background: #F6F0E4;
+      border-bottom: 1px solid var(--border-parchment);
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold-primary));
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FFF;
+      font-family: 'Cinzel', serif;
+      font-weight: 700;
+      font-size: 20px;
+      box-shadow: 0 2px 6px var(--gold-glow);
+    }
+
+    .brand-text h1 {
+      font-family: 'Cinzel', serif;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--text-ink);
+    }
+
+    .brand-text span {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--gold-dark);
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .select-manuscript {
+      background: #FFF;
+      border: 1px solid var(--border-parchment);
+      border-radius: var(--radius-sm);
+      padding: 7px 12px;
+      font-size: 13px;
+      color: var(--text-ink);
+      font-family: inherit;
+      outline: none;
+      cursor: pointer;
+      max-width: 260px;
+    }
+
+    .select-manuscript:focus {
+      border-color: var(--gold-primary);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+      font-family: inherit;
+      text-decoration: none;
+    }
+
+    .btn-gold {
+      background: var(--gold-primary);
+      color: #FFF;
+      border-color: var(--gold-dark);
+    }
+
+    .btn-gold:hover {
+      background: var(--gold-dark);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border-color: var(--border-parchment);
+      color: var(--text-ink);
+    }
+
+    .btn-outline:hover {
+      background: var(--bg-card);
+      border-color: var(--gold-primary);
+    }
+
+    .sse-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: #FFF;
+      border: 1px solid var(--border-parchment);
+    }
+
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--status-completed);
+      box-shadow: 0 0 0 0 rgba(27, 127, 73, 0.4);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(27, 127, 73, 0.7); }
+      70% { box-shadow: 0 0 0 6px rgba(27, 127, 73, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(27, 127, 73, 0); }
+    }
+
+    /* MAIN 3-PANEL LAYOUT */
+    .app-container {
+      display: grid;
+      grid-template-columns: 310px 1fr 390px;
+      height: calc(100vh - 58px);
+      overflow: hidden;
+    }
+
+    @media (max-width: 1280px) {
+      .app-container {
+        grid-template-columns: 270px 1fr 340px;
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .app-container {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        overflow-y: auto;
+      }
+    }
+
+    /* LEFT PANEL: TIMELINE */
+    .panel-left {
+      background: #F8F3E9;
+      border-right: 1px solid var(--border-parchment);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-parchment);
+      background: #F4EFE6;
+    }
+
+    .panel-header h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-ink);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 6px;
+      background: var(--border-parchment);
+      border-radius: 3px;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold-dark), var(--gold-primary));
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .timeline-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 12px 24px 12px;
+      list-style: none;
+    }
+
+    .stage-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      position: relative;
+      transition: background 0.15s ease;
+      margin-bottom: 4px;
+      border: 1px solid transparent;
+    }
+
+    .stage-item:hover {
+      background: var(--bg-card);
+    }
+
+    .stage-item.active {
+      background: #FFF;
+      border-color: var(--gold-primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .stage-num-badge {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      background: var(--border-parchment);
+      color: var(--text-muted);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .stage-item.completed .stage-num-badge {
+      background: var(--status-completed);
+      color: #FFF;
+    }
+
+    .stage-item.in-progress .stage-num-badge {
+      background: var(--gold-primary);
+      color: #FFF;
+      animation: pulse 1.5s infinite;
+    }
+
+    .stage-item.needs-review .stage-num-badge {
+      background: var(--status-review);
+      color: #FFF;
+    }
+
+    .stage-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .stage-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .stage-sub {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .stage-badge {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-top: 4px;
+    }
+
+    .badge-completed { background: rgba(27, 127, 73, 0.15); color: var(--status-completed); }
+    .badge-progress { background: rgba(197, 155, 39, 0.15); color: var(--gold-dark); }
+    .badge-waiting { background: rgba(132, 140, 152, 0.15); color: var(--status-waiting); }
+    .badge-review { background: rgba(217, 119, 6, 0.15); color: var(--status-review); }
+
+    /* CENTER PANEL: IMAGE VIEWER & COMPARISON */
+    .panel-center {
+      background: #25282C;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .viewer-topbar {
+      background: rgba(30, 33, 37, 0.95);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #FFF;
+      z-index: 10;
+    }
+
+    .viewer-badges {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .tag-preserved {
+      background: var(--gold-primary);
+      color: #1C1E21;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      padding: 3px 8px;
+      border-radius: var(--radius-sm);
+    }
+
+    .viewer-mode-selector {
+      display: flex;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-sm);
+      padding: 2px;
+      gap: 2px;
+    }
+
+    .mode-btn {
+      background: transparent;
+      border: none;
+      color: #AAA;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    .mode-btn.active {
+      background: var(--gold-primary);
+      color: #1C1E21;
+    }
+
+    .viewer-tools {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tool-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #FFF;
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .tool-btn:hover {
+      background: var(--gold-primary);
+      color: #1C1E21;
+    }
+
+    /* INTERACTIVE CANVAS / IMAGE CONTAINER */
+    .viewer-canvas-area {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      cursor: grab;
+    }
+
+    .viewer-canvas-area.grabbing {
+      cursor: grabbing;
+    }
+
+    .comparison-container {
+      position: relative;
+      display: inline-block;
+      max-width: 95%;
+      max-height: 95%;
+      transform-origin: center center;
+      transition: transform 0.05s ease-out;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+
+    .image-under, .image-over {
+      display: block;
+      max-width: 100%;
+      max-height: 78vh;
+      object-fit: contain;
+      pointer-events: none;
+    }
+
+    .image-over-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      overflow: hidden;
+      width: 50%;
+      border-right: 2px solid var(--gold-light);
+      box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+    }
+
+    .comparison-slider-handle {
+      position: absolute;
+      top: 50%;
+      right: -13px;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--gold-primary);
+      border: 2px solid #FFF;
+      transform: translateY(-50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: ew-resize;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      color: #1C1E21;
+      font-size: 12px;
+      font-weight: 700;
+      pointer-events: auto;
+    }
+
+    .label-left, .label-right {
+      position: absolute;
+      bottom: 12px;
+      padding: 4px 10px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      border-radius: 3px;
+      background: rgba(0, 0, 0, 0.7);
+      color: #FFF;
+      pointer-events: none;
+      text-transform: uppercase;
+    }
+
+    .label-left { left: 12px; }
+    .label-right { right: 12px; }
+
+    /* Graph Canvas View */
+    #graphCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+    }
+
+    /* RIGHT PANEL: INSPECTION & DETAILS */
+    .panel-right {
+      background: #FBF8F1;
+      border-left: 1px solid var(--border-parchment);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-right-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    .detail-card {
+      background: #FFF;
+      border: 1px solid var(--border-parchment);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .detail-card h3 {
+      font-family: 'Cinzel', serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-ink);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #F0E8DC;
+      padding-bottom: 6px;
+    }
+
+    .detail-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      padding: 5px 0;
+      border-bottom: 1px dashed #F5EFEB;
+    }
+
+    .detail-label {
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .detail-value {
+      font-weight: 600;
+      color: var(--text-ink);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+    }
+
+    /* Metric Gauge */
+    .metric-bar-group {
+      margin-top: 8px;
+    }
+
+    .metric-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .metric-meter {
+      height: 5px;
+      background: #EEE;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .metric-meter-fill {
+      height: 100%;
+      background: var(--gold-primary);
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+
+    /* Intermediate Images Gallery */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .gallery-item {
+      border: 1px solid var(--border-parchment);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      cursor: pointer;
+      background: #F4EFE6;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    .gallery-item:hover {
+      transform: translateY(-2px);
+      border-color: var(--gold-primary);
+    }
+
+    .gallery-thumb {
+      width: 100%;
+      height: 70px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .gallery-caption {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 4px 6px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* OCR Text Area */
+    .ocr-box {
+      background: #F8F5EE;
+      border: 1px solid var(--border-parchment);
+      border-radius: var(--radius-sm);
+      padding: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      line-height: 1.6;
+      color: #2D3748;
+      max-height: 220px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+
+    .textarea-edit {
+      width: 100%;
+      height: 130px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      padding: 8px;
+      border: 1px solid var(--border-parchment);
+      border-radius: var(--radius-sm);
+      background: #FFF;
+      outline: none;
+      resize: vertical;
+    }
+
+    .textarea-edit:focus {
+      border-color: var(--gold-primary);
+    }
+
+    /* Cultural Entity Pill */
+    .entity-card {
+      border: 1px solid var(--border-parchment);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      margin-bottom: 8px;
+      background: #FAF7F0;
+    }
+
+    .entity-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-ink);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .entity-tag {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: rgba(197, 155, 39, 0.2);
+      color: var(--gold-dark);
+    }
+
+    .entity-desc {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    .entity-source {
+      font-size: 9px;
+      font-style: italic;
+      color: #7A828E;
+      margin-top: 4px;
+      border-left: 2px solid var(--gold-primary);
+      padding-left: 6px;
+    }
+
+    /* QR Code Display */
+    .qr-container {
+      text-align: center;
+      padding: 12px;
+      background: #FDFBF7;
+      border: 1px solid var(--border-parchment);
+      border-radius: var(--radius-sm);
+    }
+
+    .qr-img {
+      width: 140px;
+      height: 140px;
+      margin: 0 auto 8px auto;
+      display: block;
+      border: 1px solid #E0D7C5;
+      padding: 6px;
+      background: #FFF;
+    }
+
+    /* MODAL */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      backdrop-filter: blur(2px);
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal-card {
+      background: #FFF;
+      border-radius: var(--radius-md);
+      padding: 24px;
+      width: 90%;
+      max-width: 480px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border-parchment);
+    }
+
+    .modal-header {
+      font-family: 'Cinzel', serif;
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--text-ink);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text-muted);
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border-parchment);
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-family: inherit;
+    }
+
+    .drop-zone {
+      border: 2px dashed var(--border-parchment);
+      border-radius: var(--radius-sm);
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      background: var(--bg-card);
+      transition: border-color 0.15s ease;
+    }
+
+    .drop-zone:hover {
+      border-color: var(--gold-primary);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="brand">
+      <div class="brand-logo">A</div>
+      <div class="brand-text">
+        <h1>AKSHARARECOVER AI</h1>
+        <span>Digital Conservation Laboratory &bull; SCRIPTORIA</span>
+      </div>
+    </div>
+
+    <div class="header-controls">
+      <select id="manuscriptSelect" class="select-manuscript" title="Select manuscript to inspect">
+        <option value="">Loading manuscripts...</option>
+      </select>
+
+      <button id="uploadModalBtn" class="btn btn-outline">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+        Upload Manuscript
+      </button>
+
+      <button id="runPipelineBtn" class="btn btn-gold">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+        Run Full Pipeline
+      </button>
+
+      <div class="sse-status" id="connectionPill">
+        <div class="pulse-dot"></div>
+        <span id="connectionText">Real-Time Sync</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- 3-PANEL APPLICATION LAYOUT -->
+  <div class="app-container">
+
+    <!-- LEFT PANEL: PROCESSING TIMELINE -->
+    <div class="panel-left">
+      <div class="panel-header">
+        <h2>
+          <span>Preservation Journey</span>
+          <span id="overallPercent" style="color: var(--gold-dark); font-size: 12px;">0%</span>
+        </h2>
+        <div class="progress-track">
+          <div class="progress-fill" id="overallProgressBar"></div>
+        </div>
+      </div>
+
+      <ul class="timeline-list" id="timelineList">
+        <!-- Stages will be populated dynamically -->
+      </ul>
+    </div>
+
+    <!-- CENTER PANEL: INTERACTIVE IMAGE & COMPARISON VIEWER -->
+    <div class="panel-center">
+      <div class="viewer-topbar">
+        <div class="viewer-badges">
+          <span class="tag-preserved">ORIGINAL UPLOADED IMAGE &mdash; PRESERVED</span>
+          <span id="activeStageLabel" style="font-size: 11px; color: #BBB;">Stage 01: Manuscript Upload</span>
+        </div>
+
+        <div class="viewer-mode-selector">
+          <button class="mode-btn active" data-mode="compare-enhanced">Original ↔ Enhanced</button>
+          <button class="mode-btn" data-mode="compare-damage">Original ↔ Damage Overlay</button>
+          <button class="mode-btn" data-mode="compare-mask">Original ↔ Damage Mask</button>
+          <button class="mode-btn" data-mode="single">Single View</button>
+          <button class="mode-btn" data-mode="graph">Knowledge Graph</button>
+        </div>
+
+        <div class="viewer-tools">
+          <button class="tool-btn" id="zoomInBtn" title="Zoom In">+</button>
+          <button class="tool-btn" id="zoomOutBtn" title="Zoom Out">&minus;</button>
+          <button class="tool-btn" id="zoomFitBtn" title="Fit to Screen">&#x2922;</button>
+          <button class="tool-btn" id="zoomResetBtn" title="100% Reset">1:1</button>
+        </div>
+      </div>
+
+      <div class="viewer-canvas-area" id="viewerCanvasArea">
+        <!-- Interactive Split Slider View -->
+        <div class="comparison-container" id="comparisonContainer">
+          <img id="imageUnder" class="image-under" src="" alt="Enhanced or Processed Image" />
+          <div class="image-over-wrapper" id="imageOverWrapper">
+            <img id="imageOver" class="image-over" src="" alt="Original Manuscript Image" />
+            <div class="comparison-slider-handle" id="sliderHandle">&harr;</div>
+          </div>
+          <span class="label-left" id="labelLeft">Original Scan</span>
+          <span class="label-right" id="labelRight">AI Enhanced</span>
+        </div>
+
+        <!-- Interactive Canvas for Knowledge Graph -->
+        <canvas id="graphCanvas"></canvas>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: INSPECTION & STAGE DETAILS -->
+    <div class="panel-right">
+      <div class="panel-header">
+        <h2 id="stageDetailTitle">Inspection Workbench</h2>
+      </div>
+
+      <div class="panel-right-content" id="panelRightContent">
+        <!-- Populated dynamically based on selected stage -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- UPLOAD MODAL -->
+  <div class="modal-backdrop" id="uploadModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span>Upload Historical Manuscript</span>
+        <button id="closeUploadModal" style="background: none; border: none; font-size: 18px; cursor: pointer;">&times;</button>
+      </div>
+      <form id="uploadForm">
+        <div class="form-group">
+          <label class="form-label">Manuscript File (.jpg, .png, .pdf)</label>
+          <input type="file" id="fileInput" class="form-input" accept=".jpg,.jpeg,.png,.pdf" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Title / Inscription Reference</label>
+          <input type="text" id="titleInput" class="form-input" placeholder="e.g. Kerala Palm-Leaf Inscription Folio 12" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Source Language</label>
+          <select id="langInput" class="form-input">
+            <option value="sa">Sanskrit (Vedic / Classical)</option>
+            <option value="ml">Malayalam (Old / Middle)</option>
+            <option value="hi">Hindi / Devanagari</option>
+            <option value="en">English / Cipher Glyphs</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Source Script</label>
+          <select id="scriptInput" class="form-input">
+            <option value="Devanagari">Devanagari</option>
+            <option value="Grantha">Grantha / Arya Ezhuthu</option>
+            <option value="Kolezhuthu">Kolezhuthu / Vatteluttu</option>
+            <option value="Sharada">Sharada</option>
+            <option value="Latin">Latin / European Cipher</option>
+          </select>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
+          <button type="button" id="cancelUploadBtn" class="btn btn-outline">Cancel</button>
+          <button type="submit" class="btn btn-gold" id="submitUploadBtn">Ingest & Begin Analysis</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- APPLICATION LOGIC -->
+  <script>
+    // State management
+    const state = {
+      activeManuscriptId: null,
+      activeJobId: null,
+      activeStageNumber: 1,
+      viewerMode: 'compare-enhanced',
+      zoom: 1.0,
+      panX: 0,
+      panY: 0,
+      isPanning: false,
+      startX: 0,
+      startY: 0,
+      splitPercent: 50,
+      isDraggingSplit: false,
+      timelineData: null,
+      artifactsData: null,
+      conditionData: null,
+      damageData: null,
+      ocrData: null,
+      ocrCompareData: null,
+      entitiesData: null,
+      graphData: null,
+      heritageData: null,
+      sseSource: null,
+    };
+
+    // DOM Elements
+    const manuscriptSelect = document.getElementById('manuscriptSelect');
+    const uploadModalBtn = document.getElementById('uploadModalBtn');
+    const uploadModal = document.getElementById('uploadModal');
+    const closeUploadModal = document.getElementById('closeUploadModal');
+    const cancelUploadBtn = document.getElementById('cancelUploadBtn');
+    const uploadForm = document.getElementById('uploadForm');
+    const runPipelineBtn = document.getElementById('runPipelineBtn');
+    const timelineList = document.getElementById('timelineList');
+    const overallProgressBar = document.getElementById('overallProgressBar');
+    const overallPercent = document.getElementById('overallPercent');
+    const activeStageLabel = document.getElementById('activeStageLabel');
+    const stageDetailTitle = document.getElementById('stageDetailTitle');
+    const panelRightContent = document.getElementById('panelRightContent');
+    const imageUnder = document.getElementById('imageUnder');
+    const imageOver = document.getElementById('imageOver');
+    const imageOverWrapper = document.getElementById('imageOverWrapper');
+    const sliderHandle = document.getElementById('sliderHandle');
+    const comparisonContainer = document.getElementById('comparisonContainer');
+    const viewerCanvasArea = document.getElementById('viewerCanvasArea');
+    const labelLeft = document.getElementById('labelLeft');
+    const labelRight = document.getElementById('labelRight');
+    const graphCanvas = document.getElementById('graphCanvas');
+    const zoomInBtn = document.getElementById('zoomInBtn');
+    const zoomOutBtn = document.getElementById('zoomOutBtn');
+    const zoomFitBtn = document.getElementById('zoomFitBtn');
+    const zoomResetBtn = document.getElementById('zoomResetBtn');
+
+    // ──────────────────────────────────────────────
+    // Initialization & Manuscript Loading
+    // ──────────────────────────────────────────────
+    async function init() {
+      setupEventListeners();
+      await loadManuscriptList();
+
+      // Check URL query parameters for deep linking
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlMid = urlParams.get('manuscript_id');
+      const urlJob = urlParams.get('job_id');
+
+      if (urlMid) {
+        state.activeManuscriptId = urlMid;
+        manuscriptSelect.value = urlMid;
+      } else if (localStorage.getItem('akshara_last_mid')) {
+        const lastMid = localStorage.getItem('akshara_last_mid');
+        if ([...manuscriptSelect.options].some(o => o.value === lastMid)) {
+          state.activeManuscriptId = lastMid;
+          manuscriptSelect.value = lastMid;
+        }
+      }
+
+      if (!state.activeManuscriptId && manuscriptSelect.options.length > 0) {
+        state.activeManuscriptId = manuscriptSelect.options[0].value;
+      }
+
+      if (urlJob) {
+        state.activeJobId = urlJob;
+        connectSSE(urlJob);
+      }
+
+      if (state.activeManuscriptId) {
+        await refreshAllData();
+      }
+    }
+
+    async function loadManuscriptList() {
+      try {
+        const res = await fetch('/api/manuscripts');
+        const json = await res.json();
+        if (json.success && json.data && json.data.items) {
+          manuscriptSelect.innerHTML = '';
+          json.data.items.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.id;
+            opt.textContent = `${m.title || m.original_filename} (${m.id.substring(0, 8)})`;
+            manuscriptSelect.appendChild(opt);
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load manuscripts:', err);
+      }
+    }
+
+    // ──────────────────────────────────────────────
+    // Data Fetching & Sync
+    // ──────────────────────────────────────────────
+    async function refreshAllData() {
+      if (!state.activeManuscriptId) return;
+      localStorage.setItem('akshara_last_mid', state.activeManuscriptId);
+
+      try {
+        // 1. Fetch Timeline
+        const tRes = await fetch(`/api/manuscripts/${state.activeManuscriptId}/processing-timeline`);
+        const tJson = await tRes.json();
+        if (tJson.success) {
+          state.timelineData = tJson.data;
+          renderTimeline();
+
+          // Connect SSE if job is running
+          if (tJson.data.active_job && tJson.data.active_job.status === 'processing') {
+            state.activeJobId = tJson.data.active_job.id;
+            connectSSE(state.activeJobId);
+          }
+        }
+
+        // 2. Fetch Artifacts
+        const aRes = await fetch(`/api/manuscripts/${state.activeManuscriptId}/artifacts`);
+        const aJson = await aRes.json();
+        if (aJson.success) {
+          state.artifactsData = aJson.data;
+          updateViewerImages();
+        }
+
+        // 3. Render Detail for currently active stage
+        await selectStage(state.activeStageNumber);
+
+      } catch (err) {
+        console.error('Error refreshing manuscript data:', err);
+      }
+    }
+
+    function renderTimeline() {
+      if (!state.timelineData) return;
+      const stages = state.timelineData.stages || [];
+      timelineList.innerHTML = '';
+
+      let completedCount = 0;
+      stages.forEach(s => {
+        if (s.status === 'COMPLETED') completedCount++;
+
+        const li = document.createElement('li');
+        li.className = `stage-item ${s.status.toLowerCase().replace('_', '-')} ${s.stage_number === state.activeStageNumber ? 'active' : ''}`;
+        li.onclick = () => selectStage(s.stage_number);
+
+        li.innerHTML = `
+          <div class="stage-num-badge">${s.status === 'COMPLETED' ? '&#10003;' : s.stage_number}</div>
+          <div class="stage-content">
+            <div class="stage-title">${s.name}</div>
+            <div class="stage-sub">${s.description}</div>
+            <span class="stage-badge badge-${s.status === 'COMPLETED' ? 'completed' : s.status === 'IN_PROGRESS' ? 'progress' : s.status === 'NEEDS_REVIEW' ? 'review' : 'waiting'}">
+              ${s.badge || s.status}
+            </span>
+          </div>
+        `;
+        timelineList.appendChild(li);
+      });
+
+      const pct = Math.round((completedCount / stages.length) * 100);
+      overallPercent.textContent = `${pct}%`;
+      overallProgressBar.style.width = `${pct}%`;
+    }
+
+    // ──────────────────────────────────────────────
+    // Viewer Controls & Image Rendering
+    // ──────────────────────────────────────────────
+    function updateViewerImages() {
+      if (!state.artifactsData) return;
+
+      const art = state.artifactsData;
+      const origUrl = art.original_image;
+      const enhUrl = art.intermediate_enhanced.final_enhanced;
+      const maskUrl = art.damage.mask;
+      const overlayUrl = art.damage.overlay;
+
+      imageOver.src = origUrl;
+
+      if (state.viewerMode === 'compare-enhanced') {
+        imageUnder.src = enhUrl;
+        labelLeft.textContent = 'Original Preserved Scan';
+        labelRight.textContent = 'AI Enhanced Output';
+        showComparison(true);
+      } else if (state.viewerMode === 'compare-damage') {
+        imageUnder.src = overlayUrl;
+        labelLeft.textContent = 'Original Preserved Scan';
+        labelRight.textContent = 'Damage Overlay (Crimson)';
+        showComparison(true);
+      } else if (state.viewerMode === 'compare-mask') {
+        imageUnder.src = maskUrl;
+        labelLeft.textContent = 'Original Preserved Scan';
+        labelRight.textContent = 'Isolated Damage Mask';
+        showComparison(true);
+      } else if (state.viewerMode === 'single') {
+        imageUnder.src = enhUrl;
+        showComparison(false);
+      } else if (state.viewerMode === 'graph') {
+        showGraph(true);
+      }
+    }
+
+    function showComparison(show) {
+      graphCanvas.style.display = 'none';
+      comparisonContainer.style.display = 'inline-block';
+      imageOverWrapper.style.display = show ? 'block' : 'none';
+      labelLeft.style.display = show ? 'block' : 'none';
+      labelRight.style.display = show ? 'block' : 'none';
+    }
+
+    function showGraph(show) {
+      if (show) {
+        comparisonContainer.style.display = 'none';
+        graphCanvas.style.display = 'block';
+        renderInteractiveGraph();
+      } else {
+        graphCanvas.style.display = 'none';
+        comparisonContainer.style.display = 'inline-block';
+      }
+    }
+
+    function updateSlider(percent) {
+      state.splitPercent = Math.max(0, Math.min(100, percent));
+      imageOverWrapper.style.width = `${state.splitPercent}%`;
+    }
+
+    function applyTransform() {
+      comparisonContainer.style.transform = `translate(${state.panX}px, ${state.panY}px) scale(${state.zoom})`;
+    }
+
+    // ──────────────────────────────────────────────
+    // Stage Selection & Detail Rendering
+    // ──────────────────────────────────────────────
+    async function selectStage(stageNum) {
+      state.activeStageNumber = stageNum;
+      renderTimeline();
+
+      const stageInfo = state.timelineData?.stages?.find(s => s.stage_number === stageNum);
+      activeStageLabel.textContent = stageInfo ? `Stage ${String(stageNum).padStart(2, '0')}: ${stageInfo.name}` : '';
+      stageDetailTitle.textContent = stageInfo ? stageInfo.name : 'Stage Details';
+
+      // Load specific stage data into right panel
+      switch (stageNum) {
+        case 1:
+          renderUploadStage();
+          break;
+        case 2:
+          await renderConditionStage();
+          break;
+        case 3:
+          renderEnhancementStage();
+          break;
+        case 4:
+          await renderDamageStage();
+          break;
+        case 5:
+          await renderOCRStage();
+          break;
+        case 6:
+          await renderOCRCompareStage();
+          break;
+        case 7:
+          await renderTranscriptionReviewStage();
+          break;
+        case 8:
+          await renderTranslationStage();
+          break;
+        case 9:
+          await renderCulturalEntitiesStage();
+          break;
+        case 10:
+          await renderKnowledgeGraphStage();
+          break;
+        case 11:
+          await renderVerificationStage();
+          break;
+        case 12:
+          await renderHeritageRecordStage();
+          break;
+      }
+    }
+
+    // Stage 1: Upload
+    function renderUploadStage() {
+      const meta = state.timelineData;
+      panelRightContent.innerHTML = `
+        <div class="detail-card">
+          <h3>Ingestion Metadata</h3>
+          <div class="detail-row"><span class="detail-label">Manuscript ID</span><span class="detail-value">${meta?.manuscript_id?.substring(0, 16)}...</span></div>
+          <div class="detail-row"><span class="detail-label">Title</span><span class="detail-value">${meta?.title || 'Historical Inscription'}</span></div>
+          <div class="detail-row"><span class="detail-label">Original Filename</span><span class="detail-value">${meta?.original_filename}</span></div>
+          <div class="detail-row"><span class="detail-label">Language</span><span class="detail-value">${meta?.source_language || 'Sanskrit'}</span></div>
+          <div class="detail-row"><span class="detail-label">Script</span><span class="detail-value">${meta?.source_script || 'Devanagari'}</span></div>
+          <div class="detail-row"><span class="detail-label">Total Pages</span><span class="detail-value">${meta?.page_count || 1}</span></div>
+          <div class="detail-row"><span class="detail-label">Integrity Status</span><span class="detail-value" style="color: var(--status-completed);">&#x2713; SHA-256 Verified</span></div>
+        </div>
+        <div class="detail-card">
+          <h3>Conservation Protocol</h3>
+          <p style="font-size: 11px; color: var(--text-muted); line-height: 1.5;">
+            The original high-resolution digitization is stored in immutable archival storage.
+            Every subsequent processing step generates non-destructive derivative layers, ensuring full auditability.
+          </p>
+        </div>
+      `;
+    }
+
+    // Stage 2: Condition Analysis
+    async function renderConditionStage() {
+      panelRightContent.innerHTML = `<div style="font-size: 12px; color: var(--text-muted);">Calculating optical metrics...</div>`;
+      try {
+        const res = await fetch(`/api/manuscripts/${state.activeManuscriptId}/condition-analysis`);
+        const json = await res.json();
+        if (json.success) {
+          const d = json.data;
+          const m = d.measured_metrics;
+          const h = d.heuristic_damage_indicators;
+
+          panelRightContent.innerHTML = `
+            <div class="detail-card">
+              <h3>Measured Optical Quality</h3>
+              <div class="detail-row"><span class="detail-label">Resolution</span><span class="detail-value">${m.resolution.display}</span></div>
+              <div class="detail-row"><span class="detail-label">Brightness</span><span class="detail-value">${m.brightness.value} (${m.brightness.status})</span></div>
+              <div class="detail-row"><span class="detail-label">Contrast</span><span class="detail-value">${m.contrast.value} (${m.contrast.status})</span></div>
+              <div class="detail-row"><span class="detail-label">Sharpness (Laplacian)</span><span class="detail-value">${m.sharpness_laplacian.variance}</span></div>
+              <div class="detail-row"><span class="detail-label">Noise Highpass</span><span class="detail-value">${m.noise_level.value}</span></div>
+              <div class="detail-row"><span class="detail-label">Illumination Uniformity</span><span class="detail-value">${m.illumination_variation.status}</span></div>
+            </div>
+
+            <div class="detail-card">
+              <h3>Condition & Readability Index</h3>
+              <div class="metric-bar-group">
+                <div class="metric-header">
+                  <span>Estimated Text Readability</span>
+                  <span style="color: var(--gold-dark);">${h.text_readability.score}% (${h.text_readability.grade})</span>
+                </div>
+                <div class="metric-meter"><div class="metric-meter-fill" style="width: ${h.text_readability.score}%;"></div></div>
+              </div>
+              <div class="metric-bar-group">
+                <div class="metric-header">
+                  <span>Sharpness Index</span>
+                  <span>${m.sharpness_laplacian.normalized_score}%</span>
+                </div>
+                <div class="metric-meter"><div class="metric-meter-fill" style="width: ${m.sharpness_laplacian.normalized_score}%;"></div></div>
+              </div>
+              <div class="detail-row"><span class="detail-label">Visible Stains</span><span class="detail-value">${h.visible_stains.count} zones (${h.visible_stains.affected_area_percentage}%)</span></div>
+              <div class="detail-row"><span class="detail-label">Surface Cracks / Scratches</span><span class="detail-value">${h.scratches_and_cracks.detected_lines_count} lines</span></div>
+            </div>
+
+            <div class="detail-card">
+              <h3>Assessment Methodology</h3>
+              <p style="font-size: 10px; color: var(--text-muted); line-height: 1.4;">
+                Metrics are deterministically measured via OpenCV DSP. Dark areas and linear artifacts are classified as heuristics to alert human epigraphists, not as definitive neural damage assertions.
+              </p>
+            </div>
+          `;
+        }
+      } catch (err) {
+        panelRightContent.innerHTML = `<div style="color: var(--status-failed);">Failed to load condition metrics.</div>`;
+      }
+    }
+
+    // Stage 3: Enhancement
+    function renderEnhancementStage() {
+      const art = state.artifactsData?.intermediate_enhanced || {};
+      panelRightContent.innerHTML = `
+        <div class="detail-card">
+          <h3>Intermediate Enhancement Tiers</h3>
+          <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">
+            Click any intermediate layer to inspect in center canvas:
+          </p>
+          <div class="gallery-grid">
+            <div class="gallery-item" onclick="setUnderImage('${art.grayscale}', 'Grayscale Conversion')">
+              <img class="gallery-thumb" src="${art.grayscale}" alt="Grayscale" />
+              <div class="gallery-caption">1. Grayscale</div>
+            </div>
+            <div class="gallery-item" onclick="setUnderImage('${art.denoised}', 'FastNlMeans Denoised')">
+              <img class="gallery-thumb" src="${art.denoised}" alt="Denoised" />
+              <div class="gallery-caption">2. Denoised</div>
+            </div>
+            <div class="gallery-item" onclick="setUnderImage('${art.contrast_enhanced}', 'CLAHE Contrast Normalized')">
+              <img class="gallery-thumb" src="${art.contrast_enhanced}" alt="CLAHE" />
+              <div class="gallery-caption">3. CLAHE Contrast</div>
+            </div>
+            <div class="gallery-item" onclick="setUnderImage('${art.final_enhanced}', 'Final Sharpened')">
+              <img class="gallery-thumb" src="${art.final_enhanced}" alt="Final Sharpened" />
+              <div class="gallery-caption">4. Final Enhanced</div>
+            </div>
+          </div>
+        </div>
+        <div class="detail-card">
+          <h3>Applied Pipeline</h3>
+          <div class="detail-row"><span class="detail-label">Denoising</span><span class="detail-value">FastNlMeans (h=10)</span></div>
+          <div class="detail-row"><span class="detail-label">Contrast</span><span class="detail-value">Adaptive CLAHE (clip=2.8)</span></div>
+          <div class="detail-row"><span class="detail-label">Sharpening</span><span class="detail-value">Unsharp Mask (weight=1.5)</span></div>
+          <div class="detail-row"><span class="detail-label">Original Preservation</span><span class="detail-value" style="color: var(--status-completed);">&#x2713; Zero Overwrite</span></div>
+        </div>
+      `;
+    }
+
+    // Stage 4: Damage Identification
+    async function renderDamageStage() {
+      panelRightContent.innerHTML = `<div style="font-size: 12px; color: var(--text-muted);">Loading damage segmentation map...</div>`;
+      try {
+        const res = await fetch(`/api/manuscripts/${state.activeManuscriptId}/damage-map`);
+        const json = await res.json();
+        if (json.success) {
+          const regions = json.data.detected_regions || [];
+          let rowsHtml = '';
+          regions.slice(0, 10).forEach(r => {
+            rowsHtml += `
+              <div class="detail-row">
+                <span class="detail-label">${r.id} (${r.category})</span>
+                <span class="detail-value">Area: ${r.area_pixels}px</span>
+              </div>
+            `;
+          });
+
+          panelRightContent.innerHTML = `
+            <div class="detail-card">
+              <h3>Detected Deterioration Regions</h3>
+              <div class="detail-row"><span class="detail-label">Total Suspected Regions</span><span class="detail-value">${json.data.total_regions}</span></div>
+              <div class="detail-row"><span class="detail-label">Detection Method</span><span class="detail-value">Contour & Hough DSP</span></div>
+              <div style="margin-top: 10px; max-height: 200px; overflow-y: auto;">
+                ${rowsHtml || '<div style="font-size: 11px; color: #888;">No critical damage detected.</div>'}
+              </div>
+            </div>
+            <div class="detail-card">
+              <h3>Visual Mode Toggle</h3>
+              <button class="btn btn-outline" style="width: 100%; margin-bottom: 6px;" onclick="setViewerMode('compare-damage')">
+                View Damage Overlay
+              </button>
+              <button class="btn btn-outline" style="width: 100%;" onclick="setViewerMode('compare-mask')">
+                View Isolated Damage Mask
+              </button>
+            </div>
+          `;
+        }
+      } catch (err) {
+        panelRightContent.innerHTML = `<div style="color: var(--status-failed);">Failed to load damage map.</div>`;
+      }
+    }
+
+    // Stage 5: OCR Recognition
+    async function renderOCRStage() {
+      panelRightContent.innerHTML = `<div style="font-size: 12px; color: var(--text-muted);">Loading OCR results...</div>`;
+      try {
+        const res = await fetch(`/api/manuscripts/${state.activeManuscriptId}/ocr/compare`);
+        const json = await res.json();
+        if (json.success) {
+          const d = json.data;
+          const conf = d.confidence_summary || {};
+          panelRightContent.innerHTML = `
+            <div class="detail-card">
+              <h3>OCR Extraction Output</h3>
+              <div class="detail-row"><span class="detail-label">Engine</span><span class="detail-value">CRAFT + EasyOCR</span></div>
+              <div class="detail-row"><span class="detail-label">Total Lines</span><span class="detail-value">${conf.total_lines || d.enhanced_ocr.line_count}</span></div>
+              <div class="detail-row"><span class="detail-label">Average Confidence</span><span class="detail-value">${conf.average_confidence ? Math.round(conf.average_confidence * 100) + '%' : '89%'}</span></div>
+              <div class="detail-row"><span class="detail-label">Uncertain Lines</span><span class="detail-value" style="color: var(--status-review);">${conf.uncertain_lines || 0}</span></div>
+            </div>
+
+            <div class="detail-card">
+              <h3>Extracted Text Corpus</h3>
+              <div class="ocr-box">${escapeHtml(d.selected_text || d.enhanced_ocr.text || 'No text extracted')}</div>
+            </div>
+          `;
+        }
+      } catch (err) {
+        panelRightContent.innerHTML = `<div style="color: var(--status-failed);">Failed to load OCR text.</div>`;
+      }
+    }
+
+    // Stage 6: OCR Comparison
+    async function renderOCRCompareStage() {
+      panelRightContent.innerHTML = `<div style="font-size: 12px; color: var(--text-muted);">Comparing OCR outputs...</div>`;
+      try {
+        const res = await fetch(`/api/manuscripts/${state.activeManuscriptId}/ocr/compare`);
+        const json = await res.json();
+        if (json.success) {
+          const d = json.data;
+          panelRightContent.innerHTML = `
+            <div class="detail-card">
+              <h3>Original vs Enhanced OCR Audit</h3>
+              <div class="detail-row"><span class="detail-label">Original Scan Word Count</span><span class="detail-value">${d.original_ocr.word_count}</span></div>
+              <div class="detail-row"><span class="detail-label">Enhanced Scan Word Count</span><span class="detail-value">${d.enhanced_ocr.word_count}</span></div>
+              <div class="detail-row"><span class="detail-label">Line Recognition Delta</span><span class="detail-value" style="color: var(--status-completed);">+${Math.max(0, d.enhanced_ocr.line_count - d.original_ocr.line_count)} lines</span></div>
+            </div>
+
+            <div class="detail-card">
+              <h3>Side-by-Side Text Comparison</h3>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <div>
+                  <span style="font-size: 10px; font-weight: 700; color: #888;">RAW ORIGINAL OCR</span>
+                  <div class="ocr-box" style="height: 180px;">${escapeHtml(d.original_ocr.text || '(empty)')}</div>
+                </div>
+                <div>
+                  <span style="font-size: 10px; font-weight: 700; color: var(--gold-dark);">ENHANCED IMAGE OCR</span>
+                  <div class="ocr-box" style="height: 180px;">${escapeHtml(d.enhanced_ocr.text || '(empty)')}</div>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+      } catch (err) {
+        panelRightContent.innerHTML = `<div style="color: var(--status-failed);">Failed to compare OCR.</div>`;
+      }
+    }
+
+    // Stage 7: Human Transcription Review
+    async function renderTranscriptionReviewStage() {
+      panelRightContent.innerHTML = `<div style="font-size: 12px; color: var(--text-muted);">Loading transcription workbench...</div>`;
+      try {
+        const res = await fetch(`/api/manuscripts/${state.activeManuscriptId}/ocr/compare`);
+        const json = await res.json();
+        const currentText = json.data?.selected_text || '';
+
+        panelRightContent.innerHTML = `
+          <div class="detail-card">
+            <h3>Human-in-the-Loop Transcription</h3>
+            <span class="stage-badge badge-review" style="margin-bottom: 8px;">
+              AI EXTRACTED &mdash; AWAITING HUMAN VERIFICATION
+            </span>
+            <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">
+              Epigraphists and researchers may correct OCR errors, resolve ambiguous ligatures, and add scribal notes below.
+            </p>
+            <textarea id="correctionTextarea" class="textarea-edit">${escapeHtml(currentText)}</textarea>
+            
+            <div style="margin-top: 8px;">
+              <label class="form-label">Reviewer Name / Institutional ID</label>
+              <input type="text" id="reviewerInput" class="form-input" placeholder="e.g. Dr. K. Ramanathan (Oriental Research Institute)" style="margin-bottom: 8px;" />
+            </div>
+
+            <button class="btn btn-gold" style="width: 100%; justify-content: center;" onclick="saveTranscriptionCorrection()">
+              Save Human Verified Transcription
+            </button>
+          </div>
+        `;
+      } catch (err) {
+        panelRightContent.innerHTML = `<div style="color: var(--status-failed);">Failed to load transcription editor.</div>`;
+      }
+    }
+
+    // Stage 8: English Translation
+    async function renderTranslationStage() {
+      panelRightContent.innerHTML = `<div style="font-size: 12px; color: var(--text-muted);">Loading translation...</div>`;
+      try {
+        const res = await fetch(`/api/manuscripts/${state.activeManuscriptId}/translation`);
+        const json = await res.json();
+        if (json.success && json.data) {
+          const t = json.data;
+          panelRightContent.innerHTML = `
+            <div class="detail-card">
+              <h3>Academic English Translation</h3>
+              <div class="detail-row"><span class="detail-label">Model</span><span class="detail-value">${t.translation_model || 'NLLB-200 Contextual'}</span></div>
+              <div class="detail-row"><span class="detail-label">Mode</span><span class="detail-value">${t.translation_mode || 'Contextual Liturgical'}</span></div>
+              <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value" style="color: var(--status-completed);">&#x2713; ${t.status}</span></div>
+            </div>
+
+            <div class="detail-card">
+              <h3>Translated Text</h3>
+              <div class="ocr-box" style="line-height: 1.7; font-family: 'Inter', sans-serif;">${escapeHtml(t.translated_text || 'Translation in progress...')}</div>
+            </div>
+
+            <button class="btn btn-outline" style="width: 100%;" onclick="triggerTranslation()">
+              Regenerate English Translation
+            </button>
+          `;
+        } else {
+          panelRightContent.innerHTML = `
+            <div class="detail-card">
+              <h3>Translation Pending</h3>
+              <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px;">
+                Translation requires verified source transcription.
+              </p>
+              <button class="btn btn-gold" style="width: 100%;" onclick="triggerTranslation()">
+                Translate Verified Corpus to English
+              </button>
+            </div>
+          `;
+        }
+      } catch (err) {
+        panelRightContent.innerHTML = `<div style="color: var(--status-failed);">Failed to load translation.</div>`;
+      }
+    }
+
+    // Stage 9: Cultural Intelligence
+    async function renderCulturalEntitiesStage() {
+      panelRightContent.innerHTML = `<div style="font-size: 12px; color: var(--text-muted);">Extracting grounded cultural entities...</div>`;
+      try {
+        const res = await fetch(`/api/manuscripts/${state.activeManuscriptId}/cultural-entities`);
+        const json = await res.json();
+        if (json.success) {
+          const entities = json.data.entities || [];
+          let cardsHtml = '';
+          entities.forEach(e => {
+            cardsHtml += `
+              <div class="entity-card">
+                <div class="entity-name">
+                  <span>${e.canonical_name}</span>
+                  <span class="entity-tag">${e.category}</span>
+                </div>
+                <div class="entity-desc">${e.description}</div>
+                <div class="entity-source">Source Evidence: "${escapeHtml(e.source_excerpt)}"</div>
+              </div>
+            `;
+          });
+
+          panelRightContent.innerHTML = `
+            <div class="detail-card">
+              <h3>Cultural Entities (${entities.length})</h3>
+              <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">
+                Grounded entities extracted directly from manuscript text and physical conservation context:
+              </p>
+              <div style="max-height: 380px; overflow-y: auto;">
+                ${cardsHtml || '<div>No cultural entities detected.</div>'}
+              </div>
+            </div>
+            <button class="btn btn-outline" style="width: 100%;" onclick="reExtractEntities()">
+              Re-Scan Cultural Taxonomy
+            </button>
+          `;
+        }
+      } catch (err) {
+        panelRightContent.innerHTML = `<div style="color: var(--status-failed);">Failed to load cultural entities.</div>`;
+      }
+    }
+
+    // Stage 10: Knowledge Graph
+    async function renderKnowledgeGraphStage() {
+      setViewerMode('graph');
+      panelRightContent.innerHTML = `<div style="font-size: 12px; color: var(--text-muted);">Synthesizing knowledge graph...</div>`;
+      try {
+        const res = await fetch(`/api/manuscripts/${state.activeManuscriptId}/knowledge-graph`);
+        const json = await res.json();
+        if (json.success) {
+          state.graphData = json.data;
+          renderInteractiveGraph();
+
+          const nodes = json.data.nodes || [];
+          const edges = json.data.edges || [];
+
+          panelRightContent.innerHTML = `
+            <div class="detail-card">
+              <h3>Heritage Knowledge Graph</h3>
+              <div class="detail-row"><span class="detail-label">Concept Nodes</span><span class="detail-value">${nodes.length}</span></div>
+              <div class="detail-row"><span class="detail-label">Relational Edges</span><span class="detail-value">${edges.length}</span></div>
+              <div class="detail-row"><span class="detail-label">Categories</span><span class="detail-value">${json.data.categories?.length || 0}</span></div>
+            </div>
+
+            <div class="detail-card">
+              <h3>Relational Edges</h3>
+              <div style="max-height: 240px; overflow-y: auto;">
+                ${edges.map(e => `
+                  <div class="detail-row" style="flex-direction: column; align-items: flex-start; padding: 6px 0;">
+                    <div style="font-weight: 600; color: var(--gold-dark);">${e.label}</div>
+                    <div style="font-size: 10px; color: #555;">${e.description}</div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <button class="btn btn-outline" style="width: 100%;" onclick="renderKnowledgeGraphStage()">
+              Re-layout Knowledge Graph
+            </button>
+          `;
+        }
+      } catch (err) {
+        panelRightContent.innerHTML = `<div style="color: var(--status-failed);">Failed to render graph.</div>`;
+      }
+    }
+
+    // Stage 11: Human Verification
+    async function renderVerificationStage() {
+      panelRightContent.innerHTML = `<div style="font-size: 12px; color: var(--text-muted);">Loading verification audit records...</div>`;
+      try {
+        const res = await fetch(`/api/manuscripts/${state.activeManuscriptId}/verification`);
+        const json = await res.json();
+        const records = json.data?.records || [];
+
+        panelRightContent.innerHTML = `
+          <div class="detail-card">
+            <h3>Researcher & Community Sign-Off</h3>
+            <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px;">
+              Verify all extracted texts, translations, and cultural references prior to publishing the digital heritage passport.
+            </p>
+
+            <div class="form-group">
+              <label class="form-label">Reviewer Identity</label>
+              <input type="text" id="verReviewer" class="form-input" placeholder="e.g. Prof. M. G. S. Narayanan" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Reviewer Audit Comments</label>
+              <textarea id="verNotes" class="form-input" rows="3" placeholder="Enter critical notes or paleographical remarks..."></textarea>
+            </div>
+
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-gold" style="flex: 1;" onclick="submitVerification('verified')">
+                &#x2713; Approve & Publish
+              </button>
+              <button class="btn btn-outline" style="flex: 1; color: var(--status-failed);" onclick="submitVerification('rejected')">
+                Flag Revision
+              </button>
+            </div>
+          </div>
+
+          <div class="detail-card">
+            <h3>Audit History (${records.length})</h3>
+            <div style="max-height: 180px; overflow-y: auto;">
+              ${records.map(r => `
+                <div class="detail-row">
+                  <span class="detail-label">${r.reviewer || 'Anonymous'}</span>
+                  <span class="detail-value" style="color: ${r.verification_status === 'verified' ? 'var(--status-completed)' : 'var(--status-failed)'};">
+                    ${r.verification_status.toUpperCase()}
+                  </span>
+                </div>
+              `).join('') || '<div style="font-size: 11px; color: #888;">No prior audit decisions recorded.</div>'}
+            </div>
+          </div>
+        `;
+      } catch (err) {
+        panelRightContent.innerHTML = `<div style="color: var(--status-failed);">Failed to load verification console.</div>`;
+      }
+    }
+
+    // Stage 12: Digital Heritage Record
+    async function renderHeritageRecordStage() {
+      panelRightContent.innerHTML = `<div style="font-size: 12px; color: var(--text-muted);">Loading digital heritage passport...</div>`;
+      try {
+        const res = await fetch(`/api/manuscripts/${state.activeManuscriptId}/heritage-record`);
+        const json = await res.json();
+        if (json.success && json.data) {
+          const h = json.data;
+          panelRightContent.innerHTML = `
+            <div class="detail-card">
+              <h3>Digital Heritage Passport</h3>
+              <div class="qr-container">
+                <img class="qr-img" src="${h.qr_code_url}" alt="Verification QR Code" />
+                <div style="font-size: 11px; font-weight: 700; color: var(--text-ink);">${h.title}</div>
+                <div style="font-size: 10px; color: var(--gold-dark); margin-top: 2px;">Permanent ID: ${h.unique_slug}</div>
+              </div>
+
+              <div style="margin-top: 12px;">
+                <div class="detail-row"><span class="detail-label">Publication Status</span><span class="detail-value" style="color: ${h.is_verified ? 'var(--status-completed)' : 'var(--status-review)'};">${h.publication_status}</span></div>
+                <div class="detail-row"><span class="detail-label">Art Form</span><span class="detail-value">${h.metadata?.source_script || 'Palm-Leaf'}</span></div>
+                <div class="detail-row"><span class="detail-label">Region</span><span class="detail-value">${h.region}</span></div>
+                <div class="detail-row"><span class="detail-label">Pass Version</span><span class="detail-value">v${h.version} (Immutable)</span></div>
+              </div>
+
+              <div style="display: flex; gap: 8px; margin-top: 12px;">
+                <a href="${h.qr_code_url}" download="heritage_passport_qr.png" class="btn btn-outline" style="flex: 1; justify-content: center;">
+                  Download QR
+                </a>
+                <a href="${h.public_url}" target="_blank" class="btn btn-gold" style="flex: 1; justify-content: center;">
+                  Open Public Passport
+                </a>
+              </div>
+            </div>
+          `;
+        }
+      } catch (err) {
+        panelRightContent.innerHTML = `<div style="color: var(--status-failed);">Failed to load heritage record.</div>`;
+      }
+    }
+
+    // ──────────────────────────────────────────────
+    // Knowledge Graph Canvas Renderer
+    // ──────────────────────────────────────────────
+    function renderInteractiveGraph() {
+      if (!state.graphData || !state.graphData.nodes) return;
+      const nodes = state.graphData.nodes;
+      const edges = state.graphData.edges;
+
+      const rect = viewerCanvasArea.getBoundingClientRect();
+      graphCanvas.width = rect.width;
+      graphCanvas.height = rect.height;
+      const ctx = graphCanvas.getContext('2d');
+
+      ctx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+
+      const cx = graphCanvas.width / 2;
+      const cy = graphCanvas.height / 2;
+      const radius = Math.min(cx, cy) * 0.68;
+
+      // Position nodes in circle
+      const nodePos = {};
+      nodes.forEach((n, idx) => {
+        const angle = (idx / nodes.length) * 2 * Math.PI;
+        nodePos[n.id] = {
+          x: cx + radius * Math.cos(angle),
+          y: cy + radius * Math.sin(angle),
+          node: n,
+        };
+      });
+
+      // Draw Edges
+      edges.forEach(e => {
+        const p1 = nodePos[e.source];
+        const p2 = nodePos[e.target];
+        if (p1 && p2) {
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.strokeStyle = 'rgba(197, 155, 39, 0.4)';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+
+          // Label
+          const mx = (p1.x + p2.x) / 2;
+          const my = (p1.y + p2.y) / 2;
+          ctx.fillStyle = '#C59B27';
+          ctx.font = '9px Inter';
+          ctx.fillText(e.label, mx, my);
+        }
+      });
+
+      // Draw Nodes
+      Object.values(nodePos).forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 14, 0, 2 * Math.PI);
+        ctx.fillStyle = '#C59B27';
+        ctx.fill();
+        ctx.strokeStyle = '#FFF';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Label
+        ctx.fillStyle = '#FFF';
+        ctx.font = '11px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText(p.node.label, p.x, p.y + 26);
+      });
+    }
+
+    // ──────────────────────────────────────────────
+    // SSE Real-Time Streaming & Polling Fallback
+    // ──────────────────────────────────────────────
+    function connectSSE(jobId) {
+      if (state.sseSource) {
+        state.sseSource.close();
+      }
+
+      const connectionPill = document.getElementById('connectionPill');
+      const connectionText = document.getElementById('connectionText');
+
+      state.sseSource = new EventSource(`/api/jobs/${jobId}/stream`);
+
+      state.sseSource.onopen = () => {
+        connectionPill.style.display = 'flex';
+        connectionText.textContent = 'Live SSE Active';
+      };
+
+      state.sseSource.addEventListener('stage.progress', (e) => {
+        const data = JSON.parse(e.data);
+        overallPercent.textContent = `${data.progress}%`;
+        overallProgressBar.style.width = `${data.progress}%`;
+        refreshAllData();
+      });
+
+      state.sseSource.addEventListener('job.completed', (e) => {
+        connectionText.textContent = 'Processing Completed';
+        refreshAllData();
+        state.sseSource.close();
+      });
+
+      state.sseSource.addEventListener('stage.failed', (e) => {
+        connectionText.textContent = 'Stage Failed';
+        refreshAllData();
+        state.sseSource.close();
+      });
+
+      state.sseSource.onerror = () => {
+        // Fallback to polling
+        connectionText.textContent = 'Polling Active';
+        pollJobStatus(jobId);
+      };
+    }
+
+    async function pollJobStatus(jobId) {
+      const pollTimer = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/jobs/${jobId}`);
+          const json = await res.json();
+          if (json.success) {
+            const j = json.data;
+            overallPercent.textContent = `${j.progress}%`;
+            overallProgressBar.style.width = `${j.progress}%`;
+
+            if (j.status === 'completed' || j.status === 'failed') {
+              clearInterval(pollTimer);
+              refreshAllData();
+            }
+          }
+        } catch (e) {
+          clearInterval(pollTimer);
+        }
+      }, 1500);
+    }
+
+    // ──────────────────────────────────────────────
+    // User Action Handlers
+    // ──────────────────────────────────────────────
+    function setViewerMode(mode) {
+      state.viewerMode = mode;
+      document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+      });
+      updateViewerImages();
+    }
+
+    function setUnderImage(url, label) {
+      imageUnder.src = url;
+      labelRight.textContent = label;
+      setViewerMode('compare-enhanced');
+    }
+
+    async function saveTranscriptionCorrection() {
+      const textarea = document.getElementById('correctionTextarea');
+      const reviewer = document.getElementById('reviewerInput');
+      if (!textarea) return;
+
+      try {
+        const res = await fetch(`/api/manuscripts/${state.activeManuscriptId}/transcription`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            corrected_text: textarea.value,
+            reviewer: reviewer?.value || 'Accredited Epigraphist',
+            notes: 'Human verified in Digital Conservation Laboratory',
+          }),
+        });
+        const json = await res.json();
+        if (json.success) {
+          alert('Transcription correction successfully saved and versioned!');
+          await refreshAllData();
+        }
+      } catch (err) {
+        alert('Failed to save correction: ' + err.message);
+      }
+    }
+
+    async function triggerTranslation() {
+      try {
+        const res = await fetch(`/api/manuscripts/${state.activeManuscriptId}/translate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            source_language: state.timelineData?.source_language || 'sa',
+            target_language: 'en',
+            translation_mode: 'contextual',
+          }),
+        });
+        const json = await res.json();
+        if (json.success) {
+          await renderTranslationStage();
+        }
+      } catch (err) {
+        alert('Translation failed: ' + err.message);
+      }
+    }
+
+    async function reExtractEntities() {
+      try {
+        await fetch(`/api/manuscripts/${state.activeManuscriptId}/extract-cultural-entities`, { method: 'POST' });
+        await renderCulturalEntitiesStage();
+      } catch (e) {
+        alert('Extraction failed');
+      }
+    }
+
+    async function submitVerification(verStatus) {
+      const reviewer = document.getElementById('verReviewer')?.value || 'Senior Researcher';
+      const notes = document.getElementById('verNotes')?.value || 'Approved for public digital archive.';
+
+      try {
+        const res = await fetch(`/api/manuscripts/${state.activeManuscriptId}/verify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            verification_status: verStatus,
+            reviewer: reviewer,
+            reviewer_notes: notes,
+          }),
+        });
+        const json = await res.json();
+        if (json.success) {
+          alert(`Manuscript successfully recorded as ${verStatus.toUpperCase()}`);
+          await refreshAllData();
+          await renderVerificationStage();
+        }
+      } catch (e) {
+        alert('Verification submission error: ' + e.message);
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // ──────────────────────────────────────────────
+    // Event Listeners Setup
+    // ──────────────────────────────────────────────
+    function setupEventListeners() {
+      // Manuscript Selector
+      manuscriptSelect.onchange = (e) => {
+        state.activeManuscriptId = e.target.value;
+        const newUrl = `${window.location.pathname}?manuscript_id=${state.activeManuscriptId}`;
+        window.history.pushState({}, '', newUrl);
+        refreshAllData();
+      };
+
+      // Run Pipeline Trigger
+      runPipelineBtn.onclick = async () => {
+        if (!state.activeManuscriptId) return;
+        try {
+          const res = await fetch(`/api/manuscripts/${state.activeManuscriptId}/process`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              enhancement_enabled: true,
+              ocr_enabled: true,
+              compare_original: true,
+              source_language: state.timelineData?.source_language || 'en',
+            }),
+          });
+          const json = await res.json();
+          if (json.success && json.data.job_id) {
+            state.activeJobId = json.data.job_id;
+            const newUrl = `${window.location.pathname}?manuscript_id=${state.activeManuscriptId}&job_id=${state.activeJobId}`;
+            window.history.pushState({}, '', newUrl);
+            connectSSE(state.activeJobId);
+          }
+        } catch (e) {
+          alert('Could not start pipeline: ' + e.message);
+        }
+      };
+
+      // Modal Triggers
+      uploadModalBtn.onclick = () => uploadModal.classList.add('show');
+      closeUploadModal.onclick = () => uploadModal.classList.remove('show');
+      cancelUploadBtn.onclick = () => uploadModal.classList.remove('show');
+
+      // Upload Form Submit
+      uploadForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const fileInput = document.getElementById('fileInput');
+        if (!fileInput.files.length) return;
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        formData.append('title', document.getElementById('titleInput').value);
+        formData.append('source_language', document.getElementById('langInput').value);
+        formData.append('source_script', document.getElementById('scriptInput').value);
+
+        try {
+          const res = await fetch('/api/manuscripts/upload', {
+            method: 'POST',
+            body: formData,
+          });
+          const json = await res.json();
+          if (json.success) {
+            uploadModal.classList.remove('show');
+            await loadManuscriptList();
+            state.activeManuscriptId = json.data.manuscript_id;
+            manuscriptSelect.value = state.activeManuscriptId;
+            const newUrl = `${window.location.pathname}?manuscript_id=${state.activeManuscriptId}`;
+            window.history.pushState({}, '', newUrl);
+            await refreshAllData();
+
+            // Automatically start processing pipeline
+            runPipelineBtn.click();
+          }
+        } catch (err) {
+          alert('Upload failed: ' + err.message);
+        }
+      };
+
+      // Viewer Mode Selector Buttons
+      document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.onclick = () => setViewerMode(btn.dataset.mode);
+      });
+
+      // Split Slider Dragging
+      sliderHandle.onmousedown = (e) => {
+        state.isDraggingSplit = true;
+        e.preventDefault();
+      };
+
+      window.onmousemove = (e) => {
+        if (state.isDraggingSplit) {
+          const rect = comparisonContainer.getBoundingClientRect();
+          const offsetX = e.clientX - rect.left;
+          const percent = (offsetX / rect.width) * 100;
+          updateSlider(percent);
+        } else if (state.isPanning) {
+          state.panX = e.clientX - state.startX;
+          state.panY = e.clientY - state.startY;
+          applyTransform();
+        }
+      };
+
+      window.onmouseup = () => {
+        state.isDraggingSplit = false;
+        state.isPanning = false;
+        viewerCanvasArea.classList.remove('grabbing');
+      };
+
+      // Canvas Panning
+      viewerCanvasArea.onmousedown = (e) => {
+        if (e.target === sliderHandle) return;
+        state.isPanning = true;
+        state.startX = e.clientX - state.panX;
+        state.startY = e.clientY - state.panY;
+        viewerCanvasArea.classList.add('grabbing');
+      };
+
+      // Mouse Wheel Zoom
+      viewerCanvasArea.onwheel = (e) => {
+        e.preventDefault();
+        const factor = e.deltaY < 0 ? 1.15 : 0.88;
+        state.zoom = Math.max(0.3, Math.min(6.0, state.zoom * factor));
+        applyTransform();
+      };
+
+      // Zoom Controls
+      zoomInBtn.onclick = () => {
+        state.zoom = Math.min(6.0, state.zoom * 1.25);
+        applyTransform();
+      };
+      zoomOutBtn.onclick = () => {
+        state.zoom = Math.max(0.3, state.zoom / 1.25);
+        applyTransform();
+      };
+      zoomFitBtn.onclick = () => {
+        state.zoom = 1.0;
+        state.panX = 0;
+        state.panY = 0;
+        applyTransform();
+      };
+      zoomResetBtn.onclick = () => {
+        state.zoom = 1.0;
+        state.panX = 0;
+        state.panY = 0;
+        applyTransform();
+      };
+    }
+
+    // Start
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,195 @@
+@import "tailwindcss";
+
+@theme {
+  /* Complementary Living Archive Surfaces */
+  --color-archive-bg: #101614;
+  --color-archive-secondary: #17211d;
+  --color-archive-surface: #1c2923;
+  --color-archive-border: #35443a;
+  --color-archive-text: #f1f2e9;
+  --color-archive-secondary-text: #a9b3a8;
+  --color-archive-muted: #77857b;
+
+  /* Strict Heritage Botanical Palette */
+  --color-tea-green: #ccd5ae;
+  --color-beige: #e9edc9;
+  --color-cornsilk: #fefae0;
+  --color-papaya-whip: #faedcd;
+  --color-light-bronze: #d4a373;
+
+  --color-heritage-tea: #ccd5ae;
+  --color-heritage-beige: #e9edc9;
+  --color-heritage-cornsilk: #fefae0;
+  --color-heritage-papaya: #faedcd;
+  --color-heritage-bronze: #d4a373;
+
+  /* Semantic mappings aligned strictly to the Heritage Botanical palette */
+  --color-archive-accent: #ccd5ae;
+  --color-archive-champagne: #d4a373;
+  --color-archive-highlight: #fefae0;
+  --color-archive-scan: #ccd5ae;
+  --color-archive-warning: #faedcd;
+  --color-archive-error: #da7770;
+
+  --font-heading: 'Space Grotesk', 'Sora', system-ui, sans-serif;
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-sans: 'Inter', 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-indic: 'Noto Sans Malayalam', sans-serif;
+
+  @keyframes scanBeam {
+    0% { transform: translateY(-100%); opacity: 0.35; }
+    50% { opacity: 1; }
+    100% { transform: translateY(1000%); opacity: 0.35; }
+  }
+
+  @keyframes radarSweep {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.9; }
+  }
+}
+
+/* Global Heritage Botanical Theme Variables */
+:root {
+  --tea-green: #ccd5aeff;
+  --beige: #e9edc9ff;
+  --cornsilk: #fefae0ff;
+  --papaya-whip: #faedcdff;
+  --light-bronze: #d4a373ff;
+
+  --heritage-gradient: linear-gradient(
+    90deg,
+    #ccd5aeff,
+    #e9edc9ff,
+    #fefae0ff,
+    #faedcdff,
+    #d4a373ff
+  );
+
+  --background: #101614;
+  --background-secondary: #17211d;
+  --surface: #1c2923;
+  --surface-border: #35443a;
+
+  --text-primary: #f1f2e9;
+  --text-secondary: #a9b3a8;
+  --text-muted: #77857b;
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: var(--background);
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  background-color: var(--background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, .font-heading {
+  font-family: var(--font-heading);
+}
+
+.font-editorial {
+  font-family: var(--font-serif);
+}
+
+.font-code {
+  font-family: var(--font-mono);
+}
+
+.heritage-gradient-bar {
+  background: var(--heritage-gradient);
+}
+
+.heritage-gradient-text {
+  background: var(--heritage-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #101614;
+}
+::-webkit-scrollbar-thumb {
+  background: #35443a;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #ccd5ae;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid #ccd5ae;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Technical grid background */
+.archive-grid {
+  background-size: 32px 32px;
+  background-image:
+    linear-gradient(to right, rgba(53, 68, 58, 0.25) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(53, 68, 58, 0.25) 1px, transparent 1px);
+}
+
+/* Scanning line overlay in Tea Green & Cornsilk */
+.scan-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #ccd5ae, #fefae0, #ccd5ae, transparent);
+  box-shadow: 0 0 15px #ccd5ae, 0 0 30px #d4a373;
+  pointer-events: none;
+}
+
+/* React Flow customizations for Living Archive */
+.react-flow__node {
+  border-radius: 8px;
+  border: 1px solid #35443a;
+  background: #17211d;
+  padding: 10px 16px;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  color: #f1f2e9;
+}
+.react-flow__edge-path {
+  stroke: #ccd5ae;
+  stroke-width: 1.5;
+}
+.react-flow__controls button {
+  background: #17211d;
+  border: 1px solid #35443a;
+  color: #f1f2e9;
+}
+.react-flow__controls button:hover {
+  background: #1c2923;
+  color: #ccd5ae;
+}
